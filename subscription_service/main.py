@@ -78,11 +78,7 @@ def serve():
     server.add_insecure_port('[::]:50051')
     print("Subscription Service started on port 50051")
     server.start()
-    try:
-        while True:
-            time.sleep(86400)
-    except KeyboardInterrupt:
-        server.stop(0)
+    server.wait_for_termination()
 
 if __name__ == '__main__':
     serve()
