@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package subscription;
+
+service SubscriptionService {
+  rpc Burn (BurnRequest) returns (BurnResponse);
+}
+
+message BurnRequest {
+  string pill_id = 1;
+}
+
+message BurnResponse {
+  bool success = 1;
+  string message = 2;
+}

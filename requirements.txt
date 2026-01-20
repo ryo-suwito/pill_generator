@@ -1,0 +1,12 @@
+fastapi
+uvicorn
+pynacl
+etcd3
+pyjwt
+grpcio
+grpcio-tools
+pydantic
+requests
+pytest
+pytest-asyncio
+httpx
