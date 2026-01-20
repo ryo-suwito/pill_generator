@@ -1,136 +1,143 @@
 # Distributed Pill-Based Subscription Engine
 
-**Version:** 1.0
-**Author:** Tech Lead
+A microservices-based system demonstrating a distributed subscription mechanism using cryptographic assets ("Pills") and consensus-based lifecycle management.
 
-## Executive Summary
+## Overview
 
-This project implements a **Distributed Pill-Based Subscription Engine**, a dual-domain system designed to decouple entitlement from authorization. It moves away from stateful database-driven checks towards **Cryptographic Entitlement** and **Distributed Consensus**.
-
-The architecture consists of two main domains:
-1.  **Issuance Domain**: Generates cryptographically signed bearer assets ("Pills").
-2.  **Subscription Domain**: Manages the atomic lifecycle ("Burn") and stateless service-to-service authorization ("Swap").
+This project implements a subscription engine where access rights are represented by signed bearer tokens called "Pills". These pills are issued by an authority and can be redeemed ("burnt") for short-lived access tokens (JWTs) via a Gateway. The system ensures double-spending protection using distributed consensus (etcd).
 
 ## Architecture
 
-### High-Level Design
+The system consists of the following microservices:
 
-*   **Issuance Service (The Factory)**: Signs batches of Pills using Ed25519. It maintains a Shadow DB for inventory but is not involved in validation.
-*   **Subscription Service (The Truth Engine)**: A gRPC service backed by **etcd**. It enforces Anti-Double Spend logic using Atomic CAS (Compare-And-Swap) transactions.
-*   **Gateway Service**: The entry point for clients. It performs the "Swap" operation: verifying the Pill's signature, calling the Subscription Service to burn it, and issuing a short-lived **Internal JWT**.
-*   **Internal Service**: Represents downstream microservices. They validate the Internal JWT locally (stateless) using the Gateway's public key.
+*   **Issuance Service**: Responsible for generating cryptographically signed pills using Ed25519. It acts as the authority for creating assets.
+*   **Subscription Service**: Manages the lifecycle of pills. It uses `etcd` to enforce single-use properties (burning pills) through atomic transactions to prevent double-spending. Exposes a gRPC interface.
+*   **Gateway Service**: The entry point for clients. It orchestrates the validation of pills (verifying signatures) and redemption (calling the Subscription Service to burn them). Upon success, it issues an internal JWT for access to protected resources.
+*   **Internal Service**: A sample protected resource that requires a valid internal JWT issued by the Gateway.
+*   **etcd**: A distributed key-value store used for consensus and tracking burnt pills.
 
-### Data Flow
+## Technology Stack
 
-1.  **Issue**: `POST /issue` -> Returns a signed Pill (Base64 payload + Hex Signature).
-2.  **Swap**: `POST /swap` -> Client presents Pill. Gateway verifies signature -> Calls Subscription Service to Burn (Atomic Check) -> Returns Internal JWT.
-3.  **Access**: `GET /data` -> Client presents Internal JWT. Internal Service verifies JWT -> Grants Access.
+*   **Language**: Python 3.12
+*   **Web Framework**: FastAPI
+*   **RPC Framework**: gRPC
+*   **Consensus/Storage**: etcd
+*   **Cryptography**: Ed25519 (pynacl), RSA (cryptography)
+*   **Containerization**: Docker, Docker Compose
 
 ## Prerequisites
 
-*   **Docker** and **Docker Compose**
-*   **Python 3.12+** (for local development/testing)
+*   Docker
+*   Docker Compose
 
-## Installation & Running
+## Getting Started
 
-The entire stack is containerized. To start the system:
+1.  **Clone the repository:**
+    ```bash
+    git clone <repository_url>
+    cd <repository_name>
+    ```
 
-```bash
-docker-compose up --build
-```
+2.  **Start the services:**
+    ```bash
+    docker-compose up --build
+    ```
 
-This will spin up:
-*   `etcd` (Port 2379)
-*   `issuance-service` (Port 8000)
-*   `gateway-service` (Port 8001)
-*   `internal-service` (Port 8002)
-*   `subscription-service` (Port 50051 - gRPC)
+    This will start all services and the etcd instance.
 
 ## Usage
 
 ### 1. Issue a Pill
+
 Generate a new signed pill.
 
+**Request:**
 ```bash
-curl -X POST http://localhost:8000/issue \
-  -H "Content-Type: application/json" \
-  -d '{"pid": "BATCH-001-ID-123", "iat": 1737400000}'
+curl -X POST "http://localhost:8000/issue" \
+     -H "Content-Type: application/json" \
+     -d '{"pid": "unique_pill_id_123", "iat": 1678886400}'
 ```
 
 **Response:**
 ```json
 {
-  "pill": "ey...signed_content..."
+  "pill": "Base64Payload.HexSignature"
 }
 ```
 
-### 2. Swap Pill for Token
-Exchange the Pill for an access token. This burns the pill, ensuring it cannot be used again.
+### 2. Swap Pill for Access Token
 
+Redeem the pill to get an internal JWT. This will burn the pill, preventing it from being used again.
+
+**Request:**
 ```bash
-curl -X POST http://localhost:8001/swap \
-  -H "Content-Type: application/json" \
-  -d '{"pill": "<YOUR_PILL_STRING>"}'
+curl -X POST "http://localhost:8001/swap" \
+     -H "Content-Type: application/json" \
+     -d '{"pill": "<YOUR_PILL_STRING>"}'
 ```
 
 **Response:**
 ```json
 {
-  "token": "eyJhbGciOi...",
+  "token": "eyJhbGciOiJSUzI1NiIs...",
   "expires_in": 300
 }
 ```
 
-### 3. Access Protected Resource
-Use the token to access internal services.
+### 3. Attempt Double Spend
 
+Try to swap the same pill again.
+
+**Response:**
+```json
+{
+  "detail": "Burn failed: Double spend detected"
+}
+```
+
+### 4. Access Protected Resource
+
+Use the token obtained from the swap to access the internal service.
+
+**Request:**
 ```bash
-curl -X GET http://localhost:8002/data \
-  -H "Authorization: Bearer <YOUR_TOKEN>"
+curl -X GET "http://localhost:8002/data" \
+     -H "Authorization: Bearer <YOUR_TOKEN>"
 ```
 
 **Response:**
 ```json
 {
   "message": "Access granted",
-  "user_id": "BATCH-001-ID-123",
+  "user_id": "unique_pill_id_123",
   "service": "Internal Service A"
 }
 ```
 
 ## Development
 
-### Project Structure
-
-*   `common/`: Shared libraries for Crypto (Ed25519) and Pydantic Models.
-*   `issuance_service/`: FastAPI app for issuing pills.
-*   `subscription_service/`: gRPC service for burning pills (etcd interaction).
-*   `gateway_service/`: FastAPI app for the Swap logic.
-*   `internal_service/`: Example protected service.
-*   `proto/`: Protobuf definitions.
-
 ### Running Tests
 
-Install dependencies:
+To run the tests, you can use `pytest`. It is recommended to create a virtual environment first.
 
 ```bash
+# Create and activate virtual environment
+python -m venv venv
+source venv/bin/activate
+
+# Install dependencies
 pip install -r requirements.txt
-pip install cryptography  # Required for JWT RS256 tests
+
+# Run tests
+pytest
 ```
 
-Run unit tests:
+## Project Structure
 
-```bash
-export PYTHONPATH=$PYTHONPATH:.
-pytest common/test_crypto.py \
-       issuance_service/test_issuance.py \
-       subscription_service/test_subscription.py \
-       gateway_service/test_gateway.py \
-       internal_service/test_internal.py
-```
-
-## Guarantees
-
-*   **Security**: Impossible to forge pills without the Private Key (Ed25519).
-*   **Integrity**: Impossible to double-spend a pill due to Raft consensus (etcd).
-*   **Scalability**: Subscription checks are O(1) local math operations for internal services; Consensus check is only performed once per session (at Swap).
+*   `common/`: Shared libraries for cryptography and data models.
+*   `gateway_service/`: FastAPI application for the Gateway.
+*   `internal_service/`: Example internal service.
+*   `issuance_service/`: FastAPI application for issuing pills.
+*   `subscription_service/`: gRPC server for pill lifecycle management.
+*   `proto/`: Protocol Buffer definitions for gRPC.
+*   `docker-compose.yml`: Service orchestration configuration.
