@@ -1,56 +1,65 @@
+version: '3.8'
+
 services:
   etcd:
     image: quay.io/coreos/etcd:v3.5.0
-    command: etcd --advertise-client-urls http://0.0.0.0:2379 --listen-client-urls http://0.0.0.0:2379
+    entrypoint: /usr/local/bin/etcd
+    command:
+      - --listen-client-urls=http://0.0.0.0:2379
+      - --advertise-client-urls=http://etcd:2379
     ports:
       - "2379:2379"
-    volumes:
-      - etcd-data:/etcd-data
+      - "2380:2380"
 
-  issuance-service:
-    build: .
-    command: uvicorn issuance_service.main:app --host 0.0.0.0 --port 8000
+  issuance_service:
+    build:
+      context: .
+      dockerfile: IssuanceService/Dockerfile
     ports:
-      - "8000:8000"
+      - "8000:8080"
     environment:
-      - PORT=8000
+      - ASPNETCORE_URLS=http://+:8080
+      - AUTHORITY_SEED=71b1dfdcfcb42076f1bf505ee104807c5c7230edcc695666b88a41677b587b3f
 
-  subscription-service:
-    build: .
-    command: python subscription_service/main.py
+  gateway_service:
+    build:
+      context: .
+      dockerfile: GatewayService/Dockerfile
     ports:
-      - "50051:50051"
+      - "8001:8080"
     environment:
-      - ETCD_HOST=etcd
-      - ETCD_PORT=2379
+      - ASPNETCORE_URLS=http://+:8080
+      - KEYLESS_HOST=http://host.docker.internal:8089
+      - AUTHORITY_SEED=71b1dfdcfcb42076f1bf505ee104807c5c7230edcc695666b88a41677b587b3f
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - subscription_service
+
+  subscription_service:
+    build:
+      context: .
+      dockerfile: SubscriptionService/Dockerfile
+    ports:
+      - "5000:5000"
+      # Note: gRPC default often uses HTTP/2 on 5000/5001.
+      # ASPNETCORE_URLS can optimize this.
+    environment:
+      - ASPNETCORE_URLS=http://+:5000
+      - KEYLESS_HOST=http://host.docker.internal:8089
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       - etcd
 
-  gateway-service:
-    build: .
-    command: uvicorn gateway_service.main:app --host 0.0.0.0 --port 8001
+  internal_service:
+    build:
+      context: .
+      dockerfile: InternalService/Dockerfile
     ports:
-      - "8001:8001"
+      - "8002:8080"
     environment:
-      - PORT=8001
-      - ISSUANCE_SERVICE_URL=http://issuance-service:8000
-      - SUBSCRIPTION_SERVICE_HOST=subscription-service
-      - SUBSCRIPTION_SERVICE_PORT=50051
-      - INTERNAL_SERVICE_URL=http://internal-service:8002
-    depends_on:
-      - issuance-service
-      - subscription-service
-
-  internal-service:
-    build: .
-    command: uvicorn internal_service.main:app --host 0.0.0.0 --port 8002
-    ports:
-      - "8002:8002"
-    environment:
-      - PORT=8002
-      - GATEWAY_SERVICE_URL=http://gateway-service:8001
-    depends_on:
-      - gateway-service
-
-volumes:
-  etcd-data:
+      - ASPNETCORE_URLS=http://+:8080
+      - KEYLESS_HOST=http://host.docker.internal:8089
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

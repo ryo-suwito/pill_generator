@@ -1,0 +1,49 @@
+syntax = "proto3";
+
+package neuer;
+option go_package = "./internal/proto";
+
+service CryptoService {
+  rpc StoreSecret(Request) returns (Response);
+  rpc MintJWT(Request) returns (Response);
+  rpc VerifyJWT(Request) returns (Response);
+  rpc DeleteSecret(Request) returns (Response);
+  rpc Exchange(ExchangeRequest) returns (Response);
+  rpc Scatter(ScatterRequest) returns (Response);
+  rpc Unscatter(UnscatterRequest) returns (Response);
+  rpc Transform(TransformRequest) returns (Response);
+  rpc GetTodaySalt(Request) returns (Response);
+}
+
+message Request {
+  string key_id = 1;
+  bytes payload = 2;
+}
+
+message ExchangeRequest {
+  string token = 1;
+  string prefix = 2;
+}
+
+message ScatterRequest {
+  string shared_secret = 1;
+  int64 time_window = 2;
+  bytes payload = 3;
+}
+
+message UnscatterRequest {
+  string shared_secret = 1;
+  int64 time_window = 2;
+  bytes scattered_data = 3;
+}
+
+message TransformRequest {
+  string user_id = 1;
+  string jwt_token = 2;
+  string shared_secret = 3;
+}
+
+message Response {
+  bytes data = 1;
+  string error = 2;
+}

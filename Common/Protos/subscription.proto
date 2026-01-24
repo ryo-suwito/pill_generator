@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package subscription;
+
+option csharp_namespace = "PillGenerator.Common.Protos";
+
+service SubscriptionService {
+  rpc Burn (BurnRequest) returns (BurnResponse);
+}
+
+message BurnRequest {
+  string pill_id = 1;
+}
+
+message BurnResponse {
+  bool success = 1;
+  string message = 2;
+}

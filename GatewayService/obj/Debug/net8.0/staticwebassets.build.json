@@ -1,0 +1,11 @@
+{
+  "Version": 1,
+  "Hash": "9njA4CnNzud048aXtOSmmCYHjC5EVQqZwP84xs0qaC8=",
+  "Source": "PillGenerator.Gateway",
+  "BasePath": "_content/PillGenerator.Gateway",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": []
+}

@@ -1,0 +1,6 @@
+@PillGenerator.Internal_HostAddress = http://localhost:5097
+
+GET {{PillGenerator.Internal_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

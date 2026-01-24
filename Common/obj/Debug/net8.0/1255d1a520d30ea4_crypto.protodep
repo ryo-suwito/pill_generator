@@ -1,0 +1,2 @@
+obj/Debug/net8.0/Protos/Crypto.cs \
+obj/Debug/net8.0/Protos/CryptoGrpc.cs: Protos/crypto.proto

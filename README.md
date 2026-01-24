@@ -18,11 +18,11 @@ The system consists of the following microservices:
 
 ## Technology Stack
 
-*   **Language**: Python 3.12
-*   **Web Framework**: FastAPI
+*   **Language**: C# (.NET 8.0)
+*   **Framework**: ASP.NET Core
 *   **RPC Framework**: gRPC
 *   **Consensus/Storage**: etcd
-*   **Cryptography**: Ed25519 (pynacl), RSA (cryptography)
+*   **Cryptography**: Ed25519 (NSec.Cryptography)
 *   **Containerization**: Docker, Docker Compose
 
 ## Prerequisites
@@ -35,7 +35,7 @@ The system consists of the following microservices:
 1.  **Clone the repository:**
     ```bash
     git clone <repository_url>
-    cd <repository_name>
+    cd pill_generator
     ```
 
 2.  **Start the services:**
@@ -53,9 +53,9 @@ Generate a new signed pill.
 
 **Request:**
 ```bash
-curl -X POST "http://localhost:8000/issue" \
+curl -X POST "http://localhost:8000/Issue" \
      -H "Content-Type: application/json" \
-     -d '{"pid": "unique_pill_id_123", "iat": 1678886400}'
+     -d '{"pid": "unique_pill_id_123", "iat": 1715000000}'
 ```
 
 **Response:**
@@ -71,7 +71,7 @@ Redeem the pill to get an internal JWT. This will burn the pill, preventing it f
 
 **Request:**
 ```bash
-curl -X POST "http://localhost:8001/swap" \
+curl -X POST "http://localhost:8001/Swap" \
      -H "Content-Type: application/json" \
      -d '{"pill": "<YOUR_PILL_STRING>"}'
 ```
@@ -80,7 +80,13 @@ curl -X POST "http://localhost:8001/swap" \
 ```json
 {
   "token": "eyJhbGciOiJSUzI1NiIs...",
-  "expires_in": 300
+  "expiresIn": 300,
+  "claims": {
+      "sub": "unique_pill_id_123",
+      "iss": "PillGateway",
+      "pid": "unique_pill_id_123",
+      "access_level": "vip"
+  }
 }
 ```
 
@@ -101,43 +107,26 @@ Use the token obtained from the swap to access the internal service.
 
 **Request:**
 ```bash
-curl -X GET "http://localhost:8002/data" \
+curl -X GET "http://localhost:8002/Data" \
      -H "Authorization: Bearer <YOUR_TOKEN>"
 ```
 
 **Response:**
 ```json
 {
-  "message": "Access granted",
-  "user_id": "unique_pill_id_123",
-  "service": "Internal Service A"
+    "message": "Access granted",
+    "user_id": "unique_pill_id_123",
+    "service": "Internal Service A"
 }
 ```
 
 ## Development
 
-### Running Tests
+### Project Structure
 
-To run the tests, you can use `pytest`. It is recommended to create a virtual environment first.
-
-```bash
-# Create and activate virtual environment
-python -m venv venv
-source venv/bin/activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Run tests
-pytest
-```
-
-## Project Structure
-
-*   `common/`: Shared libraries for cryptography and data models.
-*   `gateway_service/`: FastAPI application for the Gateway.
-*   `internal_service/`: Example internal service.
-*   `issuance_service/`: FastAPI application for issuing pills.
-*   `subscription_service/`: gRPC server for pill lifecycle management.
-*   `proto/`: Protocol Buffer definitions for gRPC.
+*   `Common/`: Shared libraries for cryptography, data models, and gRPC protos.
+*   `GatewayService/`: ASP.NET Core Web API for the Gateway.
+*   `InternalService/`: ASP.NET Core Web API for the Internal Service.
+*   `IssuanceService/`: ASP.NET Core Web API for issuing pills.
+*   `SubscriptionService/`: gRPC Service for pill lifecycle management.
 *   `docker-compose.yml`: Service orchestration configuration.

@@ -1,0 +1,13 @@
+/home/ryosuwito/Documents/pill_generator/Common/obj/Debug/net8.0/PillGenerator.Common.csproj.AssemblyReference.cache
+/home/ryosuwito/Documents/pill_generator/Common/obj/Debug/net8.0/PillGenerator.Common.GeneratedMSBuildEditorConfig.editorconfig
+/home/ryosuwito/Documents/pill_generator/Common/obj/Debug/net8.0/PillGenerator.Common.AssemblyInfoInputs.cache
+/home/ryosuwito/Documents/pill_generator/Common/obj/Debug/net8.0/PillGenerator.Common.AssemblyInfo.cs
+/home/ryosuwito/Documents/pill_generator/Common/obj/Debug/net8.0/PillGenerator.Common.csproj.CoreCompileInputs.cache
+/home/ryosuwito/Documents/pill_generator/Common/obj/Debug/net8.0/PillGenerator.Common.sourcelink.json
+/home/ryosuwito/Documents/pill_generator/Common/bin/Debug/net8.0/PillGenerator.Common.deps.json
+/home/ryosuwito/Documents/pill_generator/Common/bin/Debug/net8.0/PillGenerator.Common.dll
+/home/ryosuwito/Documents/pill_generator/Common/bin/Debug/net8.0/PillGenerator.Common.pdb
+/home/ryosuwito/Documents/pill_generator/Common/obj/Debug/net8.0/PillGenerator.Common.dll
+/home/ryosuwito/Documents/pill_generator/Common/obj/Debug/net8.0/refint/PillGenerator.Common.dll
+/home/ryosuwito/Documents/pill_generator/Common/obj/Debug/net8.0/PillGenerator.Common.pdb
+/home/ryosuwito/Documents/pill_generator/Common/obj/Debug/net8.0/ref/PillGenerator.Common.dll
